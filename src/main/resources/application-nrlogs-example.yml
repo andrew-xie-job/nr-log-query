@@ -1,0 +1,24 @@
+# Example configuration for the nr-log-query tool.
+nrlogs:
+  new-relic:
+    api-key: ${NEW_RELIC_API_KEY}
+    account-id: ${NEW_RELIC_ACCOUNT_ID}
+    region: US
+  llm:
+    provider: openai
+  default-since: "30 minutes ago"
+  default-limit: 50
+  # app-name: checkout-service
+
+spring:
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+      chat:
+        options:
+          model: gpt-4o
+    anthropic:
+      api-key: ${ANTHROPIC_API_KEY}
+      chat:
+        options:
+          model: claude-sonnet-4-5

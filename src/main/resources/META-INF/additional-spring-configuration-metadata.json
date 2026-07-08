@@ -1,0 +1,20 @@
+{
+  "properties": [
+    {
+      "name": "nrlogs.llm.provider",
+      "type": "com.example.nrlogs.LlmProvider",
+      "description": "Default LLM provider used to translate natural language into NRQL.",
+      "defaultValue": "openai"
+    }
+  ],
+  "hints": [
+    {
+      "name": "nrlogs.llm.provider",
+      "values": [ { "value": "openai" }, { "value": "anthropic" } ]
+    },
+    {
+      "name": "nrlogs.new-relic.region",
+      "values": [ { "value": "US" }, { "value": "EU" } ]
+    }
+  ]
+}
