@@ -5,7 +5,9 @@
 nrlogs:
   new-relic:
     api-key: ${NEW_RELIC_API_KEY}
-    account-id: ${NEW_RELIC_ACCOUNT_ID}
+    # account-id is OPTIONAL. If omitted, it is auto-discovered from your API key.
+    # Set it only if the key can access more than one account.
+    # account-id: ${NEW_RELIC_ACCOUNT_ID}
     region: US            # US or EU
   llm:
     # Default automatic provider (used only if that provider is actually available):

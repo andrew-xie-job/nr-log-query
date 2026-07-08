@@ -39,10 +39,16 @@ See `src/main/resources/application-nrlogs-example.yml`. Minimum for New Relic:
 nrlogs:
   new-relic:
     api-key: ${NEW_RELIC_API_KEY}
-    account-id: ${NEW_RELIC_ACCOUNT_ID}
+    # account-id is optional: auto-discovered from the API key. Set it only if the
+    # key can access multiple accounts (the error message will list them).
+    # account-id: ${NEW_RELIC_ACCOUNT_ID}
   llm:
     provider: ollama   # ollama | openai | anthropic (used only if that provider is available)
 ```
+
+> **Account id:** you usually don't need to provide it. If your key sees exactly one account,
+> the tool uses it automatically. If it sees several, it fails with a message listing the ids
+> and names so you can pick one for `nrlogs.new-relic.account-id`.
 
 ## Use from the IntelliJ debugger (Evaluate Expression, Alt+F8)
 
