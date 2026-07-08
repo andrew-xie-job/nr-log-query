@@ -3,9 +3,7 @@ package com.example.nrlogs;
 import java.util.EnumMap;
 import java.util.Map;
 
-import org.springframework.ai.anthropic.AnthropicChatModel;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -13,6 +11,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
 
+/**
+ * Core auto-configuration. Has no compile-time dependency on any specific LLM provider:
+ * automatic providers are contributed as {@link NamedChatClient} beans by the optional
+ * provider configurations. If none are present, manual "Kiro" mode still works.
+ */
 @AutoConfiguration
 @EnableConfigurationProperties(NrLogsProperties.class)
 public class NrLogsAutoConfiguration {
@@ -24,20 +27,10 @@ public class NrLogsAutoConfiguration {
 
     @Bean
     public NrqlTranslator nrqlTranslator(NrLogsProperties properties,
-                                         ObjectProvider<OpenAiChatModel> openAiChatModel,
-                                         ObjectProvider<AnthropicChatModel> anthropicChatModel) {
-        Map<LlmProvider, ChatClient> clients = new EnumMap<>(LlmProvider.class);
-
-        OpenAiChatModel openai = openAiChatModel.getIfAvailable();
-        if (openai != null) {
-            clients.put(LlmProvider.OPENAI, ChatClient.create(openai));
-        }
-        AnthropicChatModel anthropic = anthropicChatModel.getIfAvailable();
-        if (anthropic != null) {
-            clients.put(LlmProvider.ANTHROPIC, ChatClient.create(anthropic));
-        }
-
-        return new NrqlTranslator(clients, properties.getLlm().getProvider(), properties);
+                                         ObjectProvider<NamedChatClient> chatClients) {
+        Map<LlmProvider, ChatClient> map = new EnumMap<>(LlmProvider.class);
+        chatClients.orderedStream().forEach(nc -> map.putIfAbsent(nc.provider(), nc.client()));
+        return new NrqlTranslator(map, properties.getLlm().getProvider(), properties);
     }
 
     @Bean

@@ -35,9 +35,20 @@ dependencyManagement {
 dependencies {
     api 'org.springframework.boot:spring-boot-starter'
     api 'org.springframework:spring-web'
-    api 'org.springframework.ai:spring-ai-starter-model-openai'
-    api 'org.springframework.ai:spring-ai-starter-model-anthropic'
+
+    // Recommended NO-API-KEY automatic provider: a local Ollama server (localhost:11434).
+    // Shipped by default so `NrLogs.ask(...)` works once Ollama is running. Manual "Kiro"
+    // mode (NrLogs.prompt) needs no provider at all.
+    api 'org.springframework.ai:spring-ai-starter-model-ollama'
+
+    // Optional cloud providers. They are compile-only here (not forced on consumers).
+    // To enable one in YOUR app, add the matching starter + API key and (if needed) the
+    // Spring AI BOM. The library auto-detects it via @ConditionalOnClass.
+    compileOnly 'org.springframework.ai:spring-ai-starter-model-openai'
+    compileOnly 'org.springframework.ai:spring-ai-starter-model-anthropic'
+
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }

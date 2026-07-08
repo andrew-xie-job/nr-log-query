@@ -47,7 +47,8 @@ public class NrLogsProperties {
     public enum Region { US, EU }
 
     public static class Llm {
-        private LlmProvider provider = LlmProvider.OPENAI;
+        /** Default automatic provider. Only used if the matching provider is actually available. */
+        private LlmProvider provider = LlmProvider.OLLAMA;
         public LlmProvider getProvider() { return provider; }
         public void setProvider(LlmProvider provider) { this.provider = provider; }
     }

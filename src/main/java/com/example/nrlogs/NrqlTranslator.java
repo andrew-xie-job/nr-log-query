@@ -5,6 +5,13 @@ import java.util.Map;
 
 import org.springframework.ai.chat.client.ChatClient;
 
+/**
+ * Translates natural-language questions into NRQL log queries.
+ *
+ * <p>Supports zero or more automatic providers (OpenAI / Anthropic / Ollama). When none are
+ * configured, {@link #buildManualPrompt(String)} still works, powering the manual "Kiro" mode
+ * that needs no API key.</p>
+ */
 public class NrqlTranslator {
 
     private static final String SYSTEM_PROMPT = """
@@ -25,8 +32,6 @@ public class NrqlTranslator {
               back-quoted, e.g. `service.name`.
             - For text matches inside messages, prefer: WHERE message LIKE '%%keyword%%'.
             %s
-
-            Return the query and a short one-sentence explanation of what it does.
             """;
 
     private final Map<LlmProvider, ChatClient> clients;
@@ -36,37 +41,68 @@ public class NrqlTranslator {
     public NrqlTranslator(Map<LlmProvider, ChatClient> clients,
                           LlmProvider defaultProvider,
                           NrLogsProperties properties) {
-        this.clients = new EnumMap<>(clients);
+        this.clients = new EnumMap<>(LlmProvider.class);
+        this.clients.putAll(clients);
         this.defaultProvider = defaultProvider;
         this.properties = properties;
     }
 
+    /** @return true if at least one automatic provider (OpenAI/Anthropic/Ollama) is available. */
+    public boolean hasAutomaticProvider() {
+        return !clients.isEmpty();
+    }
+
     public NrqlResponse translate(String naturalLanguage) {
-        return translate(naturalLanguage, defaultProvider);
+        if (defaultProvider != null && clients.containsKey(defaultProvider)) {
+            return translate(naturalLanguage, defaultProvider);
+        }
+        LlmProvider any = clients.keySet().stream().findFirst().orElseThrow(this::noProviderError);
+        return translate(naturalLanguage, any);
     }
 
     public NrqlResponse translate(String naturalLanguage, LlmProvider provider) {
         ChatClient client = clients.get(provider);
         if (client == null) {
             throw new IllegalStateException("LLM provider " + provider
-                    + " is not configured. Ensure the matching Spring AI API key is set "
-                    + "(spring.ai.openai.api-key / spring.ai.anthropic.api-key).");
+                    + " is not available. Available automatic providers: " + clients.keySet()
+                    + ". With no API keys, use manual Kiro mode: NrLogs.prompt(\"" + naturalLanguage + "\").");
         }
-        String system = SYSTEM_PROMPT.formatted(
-                properties.getDefaultSince(),
-                properties.getDefaultLimit(),
-                appNameHint());
-
         NrqlResponse response = client.prompt()
-                .system(system)
+                .system(systemPrompt())
                 .user(naturalLanguage)
                 .call()
                 .entity(NrqlResponse.class);
-
         if (response == null || response.nrql() == null || response.nrql().isBlank()) {
             throw new IllegalStateException("LLM did not produce a NRQL query for request: " + naturalLanguage);
         }
         return response;
+    }
+
+    /**
+     * Builds a self-contained prompt for manual translation via the Kiro chat. No API key needed:
+     * paste the result into Kiro, then run the returned NRQL with {@link NrLogs#nrql(String)}.
+     */
+    public String buildManualPrompt(String naturalLanguage) {
+        String nl = System.lineSeparator();
+        return systemPrompt()
+                + nl
+                + "Return ONLY the NRQL query on a single line. No explanation, no markdown, no backticks."
+                + nl + nl
+                + "Request: " + naturalLanguage;
+    }
+
+    private String systemPrompt() {
+        return SYSTEM_PROMPT.formatted(
+                properties.getDefaultSince(),
+                properties.getDefaultLimit(),
+                appNameHint());
+    }
+
+    private IllegalStateException noProviderError() {
+        return new IllegalStateException(
+                "No automatic LLM provider is configured. Options with no OpenAI/Anthropic key: "
+                        + "(1) run Ollama locally and add spring-ai-starter-model-ollama, or "
+                        + "(2) use manual Kiro mode via NrLogs.prompt(\"your question\").");
     }
 
     private String appNameHint() {
