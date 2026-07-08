@@ -1,15 +1,14 @@
 plugins {
-    id 'java-library'
-    id 'maven-publish'
+    id 'java'
+    id 'org.springframework.boot' version '3.5.16'
     id 'io.spring.dependency-management' version '1.1.7'
 }
 
 group = 'com.example'
 version = '0.1.0'
-description = 'Natural-language New Relic log query tool, embeddable in Spring Boot apps and usable from the IntelliJ debugger.'
+description = 'NR Log Search - a web app to query New Relic logs in plain English.'
 
 ext {
-    springBootVersion = '3.5.16'
     springAiVersion = '1.1.1'
 }
 
@@ -17,8 +16,6 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
     }
-    withSourcesJar()
-    withJavadocJar()
 }
 
 repositories {
@@ -27,23 +24,18 @@ repositories {
 
 dependencyManagement {
     imports {
-        mavenBom "org.springframework.boot:spring-boot-dependencies:${springBootVersion}"
         mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
     }
 }
 
 dependencies {
-    api 'org.springframework.boot:spring-boot-starter'
-    api 'org.springframework:spring-web'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
 
-    // Recommended NO-API-KEY automatic provider: a local Ollama server (localhost:11434).
-    // Shipped by default so `NrLogs.ask(...)` works once Ollama is running. Manual "Kiro"
-    // mode (NrLogs.prompt) needs no provider at all.
-    api 'org.springframework.ai:spring-ai-starter-model-ollama'
+    // Default NO-API-KEY automatic translator: a local Ollama server (localhost:11434).
+    implementation 'org.springframework.ai:spring-ai-starter-model-ollama'
 
-    // Optional cloud providers. They are compile-only here (not forced on consumers).
-    // To enable one in YOUR app, add the matching starter + API key and (if needed) the
-    // Spring AI BOM. The library auto-detects it via @ConditionalOnClass.
+    // Optional cloud providers - compile-only so the app runs with no keys.
+    // To use one, change 'compileOnly' to 'implementation' and set its API key.
     compileOnly 'org.springframework.ai:spring-ai-starter-model-openai'
     compileOnly 'org.springframework.ai:spring-ai-starter-model-anthropic'
 
@@ -55,12 +47,4 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
-}
-
-publishing {
-    publications {
-        maven(MavenPublication) {
-            from components.java
-        }
-    }
 }

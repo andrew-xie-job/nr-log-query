@@ -1,0 +1,33 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: nr-log-search
+  ai:
+    # Ollama = free, local, no API key. Install Ollama + `ollama pull llama3.1`, then run it.
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        options:
+          model: llama3.1
+    # To use OpenAI/Anthropic instead: flip the matching dependency to 'implementation'
+    # in build.gradle and set the key here, e.g.:
+    # openai:
+    #   api-key: ${OPENAI_API_KEY}
+
+nrlogs:
+  new-relic:
+    api-key: ${NEW_RELIC_API_KEY:}       # required at query time
+    region: US                            # US or EU (Australia -> US unless your URL has one.eu.newrelic.com)
+    # Optional: name the accounts shown in the dropdown. If omitted, ALL accounts your
+    # API key can see are auto-discovered and listed (this is where test/prod appear).
+    # accounts:
+    #   - name: test
+    #     id: 1111111
+    #   - name: prod
+    #     id: 2222222
+  llm:
+    provider: ollama                      # ollama | openai | anthropic
+  default-since: "30 minutes ago"
+  default-limit: 50

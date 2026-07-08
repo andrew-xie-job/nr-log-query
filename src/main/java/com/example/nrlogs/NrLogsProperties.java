@@ -1,5 +1,8 @@
 package com.example.nrlogs;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
@@ -14,7 +17,6 @@ public class NrLogsProperties {
 
     private String defaultSince = "30 minutes ago";
     private int defaultLimit = 50;
-    private String appName;
 
     public NewRelic getNewRelic() { return newRelic; }
     public Llm getLlm() { return llm; }
@@ -22,20 +24,19 @@ public class NrLogsProperties {
     public void setDefaultSince(String defaultSince) { this.defaultSince = defaultSince; }
     public int getDefaultLimit() { return defaultLimit; }
     public void setDefaultLimit(int defaultLimit) { this.defaultLimit = defaultLimit; }
-    public String getAppName() { return appName; }
-    public void setAppName(String appName) { this.appName = appName; }
 
     public static class NewRelic {
         private String apiKey;
-        private Long accountId;
         private Region region = Region.US;
+        /** Optional named accounts for the dropdown. If empty, accounts are auto-discovered. */
+        private List<Account> accounts = new ArrayList<>();
 
         public String getApiKey() { return apiKey; }
         public void setApiKey(String apiKey) { this.apiKey = apiKey; }
-        public Long getAccountId() { return accountId; }
-        public void setAccountId(Long accountId) { this.accountId = accountId; }
         public Region getRegion() { return region; }
         public void setRegion(Region region) { this.region = region; }
+        public List<Account> getAccounts() { return accounts; }
+        public void setAccounts(List<Account> accounts) { this.accounts = accounts; }
 
         public String graphqlEndpoint() {
             return region == Region.EU
@@ -44,10 +45,18 @@ public class NrLogsProperties {
         }
     }
 
+    public static class Account {
+        private String name;
+        private Long id;
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+        public Long getId() { return id; }
+        public void setId(Long id) { this.id = id; }
+    }
+
     public enum Region { US, EU }
 
     public static class Llm {
-        /** Default automatic provider. Only used if the matching provider is actually available. */
         private LlmProvider provider = LlmProvider.OLLAMA;
         public LlmProvider getProvider() { return provider; }
         public void setProvider(LlmProvider provider) { this.provider = provider; }

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NR Log Search</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <main class="wrap">
+    <h1 class="logo">NR<span>Log</span>Search</h1>
+    <p class="tagline">Ask your New Relic logs a question in plain English.</p>
+
+    <form id="searchForm" class="search">
+      <div class="controls">
+        <label class="field">
+          <span>Account</span>
+          <select id="account"></select>
+        </label>
+        <label class="field">
+          <span>Mode</span>
+          <select id="mode">
+            <option value="english" selected>English</option>
+            <option value="nrql">NRQL</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="box">
+        <input id="query" type="text" autocomplete="off"
+               placeholder="e.g. errors from the payment service in the last hour" />
+        <button id="go" type="submit">Search</button>
+      </div>
+      <div id="hint" class="hint"></div>
+    </form>
+
+    <section id="status" class="status"></section>
+
+    <section id="nrqlBox" class="nrql-box" hidden>
+      <span class="nrql-label">NRQL</span>
+      <code id="nrqlText"></code>
+    </section>
+
+    <section id="results" class="results"></section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
