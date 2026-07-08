@@ -1,0 +1,33 @@
+# Runs NR Log Search together with a local Ollama model server, so English mode
+# works with no API key.
+#
+#   export NEW_RELIC_API_KEY=NRAK-xxxx
+#   docker compose up --build
+#   # one-time: pull a model into the ollama container
+#   docker compose exec ollama ollama pull llama3.1
+#   # open http://localhost:8080
+#
+services:
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      # New Relic key (required). Pass it through from your shell.
+      NEW_RELIC_API_KEY: ${NEW_RELIC_API_KEY:-}
+      # Point the app at the ollama service on the compose network.
+      SPRING_AI_OLLAMA_BASE_URL: http://ollama:11434
+      SPRING_AI_OLLAMA_CHAT_OPTIONS_MODEL: llama3.1
+      NRLOGS_NEW_RELIC_REGION: US
+    depends_on:
+      - ollama
+
+volumes:
+  ollama-data:

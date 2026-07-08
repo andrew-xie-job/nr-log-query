@@ -25,6 +25,11 @@ public class LogQueryService {
         return translator.hasProvider();
     }
 
+    /** Translate English to NRQL without running it (for the preview/edit step). */
+    public NrqlResponse translateOnly(String question) {
+        return translator.translate(question);
+    }
+
     /** Plain-English query: translate then run. */
     public QueryResult ask(long accountId, String question) {
         NrqlResponse t = translator.translate(question);

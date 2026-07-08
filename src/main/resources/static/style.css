@@ -1,51 +1,51 @@
 :root {
-  --bg: #f7f8fa;
-  --fg: #1f2430;
-  --muted: #6b7280;
-  --accent: #1a73e8;
-  --border: #dfe1e5;
-  --card: #ffffff;
+  --bg: #f7f8fa; --fg: #1f2430; --muted: #6b7280; --accent: #1a73e8;
+  --border: #dfe1e5; --card: #ffffff;
 }
 * { box-sizing: border-box; }
 body {
-  margin: 0;
-  font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-  background: var(--bg);
-  color: var(--fg);
+  margin: 0; font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg); color: var(--fg);
 }
-.wrap { max-width: 900px; margin: 0 auto; padding: 48px 20px 80px; }
+.wrap { max-width: 940px; margin: 0 auto; padding: 48px 20px 80px; }
 .logo { text-align: center; font-size: 44px; font-weight: 700; margin: 24px 0 4px; letter-spacing: -1px; }
 .logo span { color: var(--accent); }
 .tagline { text-align: center; color: var(--muted); margin: 0 0 28px; }
-.search { max-width: 680px; margin: 0 auto; }
+.search { max-width: 720px; margin: 0 auto; }
 .controls { display: flex; gap: 12px; justify-content: center; margin-bottom: 12px; }
 .field { display: flex; flex-direction: column; font-size: 12px; color: var(--muted); }
 .field span { margin-bottom: 4px; }
 .field select {
   padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px;
-  background: var(--card); font-size: 14px; min-width: 160px;
+  background: var(--card); font-size: 14px; min-width: 170px;
 }
 .box { display: flex; gap: 10px; }
 .box input {
   flex: 1; padding: 14px 18px; border: 1px solid var(--border); border-radius: 26px;
-  font-size: 16px; outline: none; background: var(--card);
-  box-shadow: 0 1px 4px rgba(32,33,36,.08);
+  font-size: 16px; outline: none; background: var(--card); box-shadow: 0 1px 4px rgba(32,33,36,.08);
 }
 .box input:focus { border-color: var(--accent); box-shadow: 0 1px 8px rgba(26,115,232,.25); }
-.box button {
+.box button, .nrql-actions button {
   padding: 0 22px; border: none; border-radius: 26px; background: var(--accent);
   color: #fff; font-size: 15px; cursor: pointer;
 }
-.box button:disabled { opacity: .5; cursor: not-allowed; }
-.hint { text-align: center; color: var(--muted); font-size: 12px; margin-top: 10px; min-height: 16px; }
-.status { text-align: center; margin: 22px auto; max-width: 680px; }
-.status .error { color: #c5221f; background: #fce8e6; border-radius: 8px; padding: 10px 14px; }
-.status .loading { color: var(--muted); }
-.nrql-box {
-  max-width: 900px; margin: 18px auto 8px; background: #0f172a; color: #e2e8f0;
-  border-radius: 8px; padding: 12px 14px; font-size: 13px; overflow-x: auto;
+.box button:disabled, .nrql-actions button:disabled { opacity: .5; cursor: not-allowed; }
+.nrql-edit { margin-top: 14px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+.nrql-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 6px; }
+.nrql-label { color: var(--accent); font-weight: 700; font-size: 13px; }
+.explanation { color: var(--muted); font-size: 12px; }
+.nrql-edit textarea {
+  width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px;
+  resize: vertical; outline: none; background: #0f172a; color: #e2e8f0;
 }
-.nrql-box .nrql-label { color: #7dd3fc; font-weight: 700; margin-right: 8px; }
+.nrql-actions { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+.nrql-actions button { padding: 8px 22px; }
+.nrql-tip { color: var(--muted); font-size: 12px; }
+.hint { text-align: center; color: var(--muted); font-size: 12px; margin-top: 12px; min-height: 16px; }
+.status { text-align: center; margin: 22px auto; max-width: 720px; }
+.status .error { color: #c5221f; background: #fce8e6; border-radius: 8px; padding: 10px 14px; display: inline-block; }
+.status .loading { color: var(--muted); }
 .results { margin-top: 12px; overflow-x: auto; }
 table { border-collapse: collapse; width: 100%; background: var(--card); font-size: 13px; }
 th, td { border: 1px solid var(--border); padding: 7px 10px; text-align: left; vertical-align: top; }

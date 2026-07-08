@@ -26,21 +26,29 @@
         </label>
       </div>
 
-      <div class="box">
-        <input id="query" type="text" autocomplete="off"
+      <div id="englishRow" class="box">
+        <input id="question" type="text" autocomplete="off"
                placeholder="e.g. errors from the payment service in the last hour" />
-        <button id="go" type="submit">Search</button>
+        <button id="translateBtn" type="submit">Translate</button>
       </div>
+
+      <div id="nrqlRow" class="nrql-edit" hidden>
+        <div class="nrql-head">
+          <span class="nrql-label">NRQL</span>
+          <span id="explanation" class="explanation"></span>
+        </div>
+        <textarea id="nrql" rows="4" spellcheck="false"
+                  placeholder="SELECT timestamp, level, message FROM Log SINCE 1 hour ago LIMIT 20"></textarea>
+        <div class="nrql-actions">
+          <button id="runBtn" type="button">Run</button>
+          <span class="nrql-tip">Edit the query if you like, then Run.</span>
+        </div>
+      </div>
+
       <div id="hint" class="hint"></div>
     </form>
 
     <section id="status" class="status"></section>
-
-    <section id="nrqlBox" class="nrql-box" hidden>
-      <span class="nrql-label">NRQL</span>
-      <code id="nrqlText"></code>
-    </section>
-
     <section id="results" class="results"></section>
   </main>
 

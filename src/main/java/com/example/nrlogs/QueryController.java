@@ -36,6 +36,23 @@ public class QueryController {
         }
     }
 
+    /** English -> NRQL only (no execution). Used by the preview/edit step. */
+    @PostMapping("/translate")
+    public ResponseEntity<?> translate(@RequestBody TranslateRequest req) {
+        if (req == null || req.text() == null || req.text().isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Question text is required."));
+        }
+        try {
+            NrqlResponse r = service.translateOnly(req.text());
+            return ResponseEntity.ok(Map.of(
+                    "nrql", r.nrql(),
+                    "explanation", r.explanation() == null ? "" : r.explanation()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", String.valueOf(e.getMessage())));
+        }
+    }
+
+    /** Run a query. If raw=false the text is treated as English and translated first. */
     @PostMapping("/query")
     public ResponseEntity<?> query(@RequestBody QueryRequest req) {
         if (req == null || req.text() == null || req.text().isBlank()) {
@@ -49,6 +66,9 @@ public class QueryController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", String.valueOf(e.getMessage())));
         }
+    }
+
+    public record TranslateRequest(String text) {
     }
 
     public record QueryRequest(long accountId, String text, boolean raw) {

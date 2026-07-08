@@ -1,63 +1,138 @@
 const $ = (id) => document.getElementById(id);
+let accountsData = null;
 
 async function loadAccounts() {
   try {
     const res = await fetch('/api/accounts');
-    const data = await res.json();
+    accountsData = await res.json();
     const sel = $('account');
     sel.innerHTML = '';
-    (data.accounts || []).forEach(a => {
+    const accounts = accountsData.accounts || [];
+    accounts.forEach(a => {
       const opt = document.createElement('option');
       opt.value = a.id;
       opt.textContent = `${a.name} (${a.id})`;
       sel.appendChild(opt);
     });
-    if (!data.accounts || data.accounts.length === 0) {
+    if (accounts.length === 0) {
       const opt = document.createElement('option');
-      opt.textContent = 'No accounts found';
-      opt.value = '';
+      opt.value = ''; opt.textContent = 'No accounts found';
       sel.appendChild(opt);
     }
-    updateHint(data);
   } catch (e) {
-    $('hint').textContent = 'Could not load accounts: ' + e;
+    accountsData = { error: String(e) };
   }
+  applyMode();
 }
 
-function updateHint(data) {
+function applyMode() {
   const mode = $('mode').value;
-  if (data && data.error) {
-    $('hint').textContent = data.error;
-    return;
-  }
-  if (mode === 'english' && data && data.translationAvailable === false) {
-    $('hint').textContent = 'English mode needs a running model (Ollama) or an API key. ' +
-      'Switch Mode to "NRQL" to type a query directly.';
-  } else if (mode === 'nrql') {
-    $('hint').textContent = 'Type a NRQL query, e.g. SELECT * FROM Log SINCE 1 hour ago LIMIT 20';
+  const english = mode === 'english';
+  $('englishRow').hidden = !english;
+  if (english) {
+    // NRQL box appears only after a translate
+    $('nrqlRow').hidden = true;
   } else {
-    $('hint').textContent = '';
+    // NRQL mode: show the editor immediately for direct typing
+    $('nrqlRow').hidden = false;
+    $('explanation').textContent = '';
+  }
+  updateHint();
+}
+
+function updateHint() {
+  const mode = $('mode').value;
+  const hint = $('hint');
+  if (accountsData && accountsData.error) { hint.textContent = accountsData.error; return; }
+  if (mode === 'english' && accountsData && accountsData.translationAvailable === false) {
+    hint.textContent = 'English mode needs a running model (Ollama) or an API key. ' +
+      'Or switch Mode to "NRQL" to type a query directly.';
+  } else if (mode === 'nrql') {
+    hint.textContent = 'Type NRQL and press Run.';
+  } else {
+    hint.textContent = 'Type a question and press Translate. You can edit the NRQL before running.';
   }
 }
 
-let lastAccountsData = null;
-$('mode').addEventListener('change', () => updateHint(lastAccountsData));
+function currentAccountId() {
+  const v = $('account').value;
+  return v ? Number(v) : null;
+}
+
+function setBusy(busy) {
+  $('translateBtn').disabled = busy;
+  $('runBtn').disabled = busy;
+}
+
+function showError(msg) { $('status').innerHTML = '<span class="error">' + msg + '</span>'; }
+function clearStatus() { $('status').innerHTML = ''; }
+
+// English -> NRQL (translate only, then let the user edit)
+$('searchForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if ($('mode').value !== 'english') return;
+  const text = $('question').value.trim();
+  if (!text) return;
+  setBusy(true);
+  $('status').innerHTML = '<span class="loading">Translating…</span>';
+  $('results').innerHTML = '';
+  try {
+    const res = await fetch('/api/translate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) { showError(data.error || 'Translation failed'); return; }
+    clearStatus();
+    $('nrql').value = data.nrql || '';
+    $('explanation').textContent = data.explanation || '';
+    $('nrqlRow').hidden = false;
+    $('nrql').focus();
+  } catch (err) {
+    showError(String(err));
+  } finally {
+    setBusy(false);
+  }
+});
+
+// Run the (possibly edited) NRQL
+$('runBtn').addEventListener('click', async () => {
+  const accountId = currentAccountId();
+  if (accountId === null) { showError('Pick an account first.'); return; }
+  const nrql = $('nrql').value.trim();
+  if (!nrql) { showError('NRQL is empty.'); return; }
+  setBusy(true);
+  $('status').innerHTML = '<span class="loading">Running…</span>';
+  $('results').innerHTML = '';
+  try {
+    const res = await fetch('/api/query', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accountId, text: nrql, raw: true })
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) { showError(data.error || 'Query failed'); return; }
+    clearStatus();
+    renderTable(data);
+  } catch (err) {
+    showError(String(err));
+  } finally {
+    setBusy(false);
+  }
+});
+
+$('mode').addEventListener('change', () => { $('results').innerHTML = ''; clearStatus(); applyMode(); });
 
 function renderTable(result) {
   const box = $('results');
   box.innerHTML = '';
   const cols = result.columns || [];
   const rows = result.rows || [];
-  if (rows.length === 0) {
-    box.innerHTML = '<p class="count">No results.</p>';
-    return;
-  }
+  if (rows.length === 0) { box.innerHTML = '<p class="count">No results.</p>'; return; }
   const table = document.createElement('table');
   const thead = document.createElement('thead');
   const htr = document.createElement('tr');
   cols.forEach(c => { const th = document.createElement('th'); th.textContent = c; htr.appendChild(th); });
-  thead.appendChild(htr);
-  table.appendChild(thead);
+  thead.appendChild(htr); table.appendChild(thead);
   const tbody = document.createElement('tbody');
   rows.forEach(r => {
     const tr = document.createElement('tr');
@@ -73,43 +148,7 @@ function renderTable(result) {
   const count = document.createElement('p');
   count.className = 'count';
   count.textContent = `${rows.length} row${rows.length === 1 ? '' : 's'}`;
-  box.appendChild(count);
-  box.appendChild(table);
+  box.appendChild(count); box.appendChild(table);
 }
 
-$('searchForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const text = $('query').value.trim();
-  const accountId = $('account').value;
-  if (!text) return;
-  if (!accountId) { $('status').innerHTML = '<span class="error">Pick an account first.</span>'; return; }
-
-  const raw = $('mode').value === 'nrql';
-  $('go').disabled = true;
-  $('status').innerHTML = '<span class="loading">Searching…</span>';
-  $('nrqlBox').hidden = true;
-  $('results').innerHTML = '';
-
-  try {
-    const res = await fetch('/api/query', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ accountId: Number(accountId), text, raw })
-    });
-    const data = await res.json();
-    if (!res.ok || data.error) {
-      $('status').innerHTML = '<span class="error">' + (data.error || 'Query failed') + '</span>';
-    } else {
-      $('status').innerHTML = '';
-      if (data.nrql) { $('nrqlText').textContent = data.nrql; $('nrqlBox').hidden = false; }
-      renderTable(data);
-    }
-  } catch (err) {
-    $('status').innerHTML = '<span class="error">' + err + '</span>';
-  } finally {
-    $('go').disabled = false;
-  }
-});
-
-loadAccounts().then(() => {}).catch(() => {});
-fetch('/api/accounts').then(r => r.json()).then(d => { lastAccountsData = d; updateHint(d); }).catch(() => {});
+loadAccounts();
